@@ -4,6 +4,7 @@ import AppError from '@shared/errors/AppError';
 
 import Customer from '../infra/typeorm/entities/Customer';
 import ICustomersRepository from '../repositories/ICustomersRepository';
+import CustomersRepository from '../infra/typeorm/repositories/CustomersRepository';
 
 interface IRequest {
   name: string;
@@ -12,10 +13,21 @@ interface IRequest {
 
 @injectable()
 class CreateCustomerService {
-  constructor(private customersRepository: ICustomersRepository) {}
+  constructor(
+    @inject(CustomersRepository)
+    private customersRepository: ICustomersRepository,
+  ) {}
 
   public async execute({ name, email }: IRequest): Promise<Customer> {
-    // TODO
+    const customerExisits = await this.customersRepository.findByEmail(email);
+
+    if (customerExisits) {
+      throw new AppError('This email alrealdy assigned to a customer');
+    }
+
+    const customer = await this.customersRepository.create({ name, email });
+
+    return customer;
   }
 }
 
